@@ -80,56 +80,44 @@ What Claude Code skills do you use?
 
 ---
 
-## Discord (Claude AI Server)
+## Discord (Claude AI Server) - #showcase
 
-**Channel:** #general (NOT #showcase - too thin for showcase)
-
-**Message:**
-
----
-
-Hey everyone 👋
-
-Quick question for Claude Code CLI users:
-
-I've been collecting my custom skills in a repo and wondering if anyone has done something similar. Mine are mostly around:
-
-- TypeScript enforcement (blocking `any`, requiring explicit types)
-- Multi-LLM consultation (sending architecture questions to Codex + Gemini, then having Claude synthesize)
-- Quality gates before deploy
-
-Nothing fancy - just SKILL.md files, no hooks or MCP integration yet.
-
-Repo if curious: <https://github.com/Svenja-dev/claude-code-skills>
-
-**Question:** Has anyone built skills with actual hook integration? I'm thinking about adding pre-commit hooks that auto-trigger the quality gate skill. Would love to see examples.
-
----
-
-## Alternative Discord Post (if you want #showcase)
-
-**Only use this if you add hook integration first!**
-
----
-
-**Channel:** #showcase
+**Channel:** #showcase (NOW with hooks!)
 
 **Message:**
 
-Built a Multi-LLM Advisor skill for Claude Code CLI.
+---
 
-**What it does:**
-- Sends your architecture/debugging question to OpenAI Codex + Google Gemini
-- Claude synthesizes both responses with its own recommendation
-- Full transparency: shows exactly what context was sent to each LLM
+Built a Claude Code hook system that blocks dangerous commands and enforces quality gates.
 
-**Why:** Sometimes you want multiple AI perspectives before making a decision. This automates the "let me also ask ChatGPT" workflow.
+**4 TypeScript Hooks:**
 
-**Technical:** Uses PreToolUse hook to detect architecture/review/debug keywords, then triggers the advisor.
+1. **security-scan.ts** (PreToolUse → Bash)
+   - Blocks `git push --force origin main`
+   - Detects secrets in command arguments (AWS keys, tokens)
+   - Warns about `git reset --hard`, `curl | sh`
+
+2. **pre-commit-quality.ts** (PreToolUse → Bash)
+   - Scans staged diff for exposed secrets
+   - Runs `tsc --noEmit` before commit
+   - Validates conventional commit format
+
+3. **post-edit-tsc-check.ts** (PostToolUse → Edit/Write)
+   - TypeScript check after EVERY file edit
+   - Immediate feedback, 45s timeout
+   - Finds tsconfig.json automatically
+
+4. **multi-llm-advisor-hook.ts** (UserPromptSubmit)
+   - Detects "refactor", "debug", "architecture" keywords
+   - Suggests calling Codex + Gemini for second opinion
+
+**Also includes 5 SKILL.md files** for quality gates, TypeScript enforcement, multi-LLM consultation, Gemini image gen, and social media content.
+
+Battle-tested building a B2B SaaS (manufacturing analytics).
 
 Repo: <https://github.com/Svenja-dev/claude-code-skills>
 
-Would love feedback on the prompt templates. Are there other modes besides architecture/review/debug that would be useful?
+Would love feedback! What hooks do you use daily?
 
 ---
 
