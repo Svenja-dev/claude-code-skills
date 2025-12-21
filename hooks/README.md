@@ -1,6 +1,6 @@
 # Claude Code Hooks
 
-Production-tested hooks for automated quality enforcement.
+Production-tested hooks for automated quality enforcement and skill activation.
 
 ## Installation
 
@@ -10,9 +10,15 @@ mkdir -p ~/.claude/hooks
 cp *.ts ~/.claude/hooks/
 ```
 
-2. Merge `settings-example.json` into your `~/.claude/settings.json`
+2. Copy skill rules to project:
+```bash
+mkdir -p .claude/skills
+cp ../config/skill-rules.json .claude/skills/
+```
 
-3. Install dependencies:
+3. Merge `settings-example.json` into your `~/.claude/settings.json`
+
+4. Install dependencies:
 ```bash
 npm install -g tsx
 ```
@@ -72,12 +78,45 @@ npm install -g tsx
 
 **Behavior:** Shows suggestion box, does NOT block
 
+### 5. skill-activation-prompt.ts (UserPromptSubmit)
+
+**Purpose:** Automatic skill activation based on prompt analysis
+
+**Reads:** `.claude/skills/skill-rules.json` (see `../config/`)
+
+**Output Format:**
+```
+========================================
+[!] SKILL ACTIVATION CHECK
+========================================
+
+[!!] CRITICAL SKILLS (REQUIRED):
+  -> code-quality-gate
+
+[*] RECOMMENDED SKILLS:
+  -> strict-typescript-mode
+
+[+] SUGGESTED SKILLS:
+  -> preview-testing
+
+ACTION: Use Skill tool BEFORE responding
+========================================
+```
+
+**Enforcement Levels:**
+- `block` (critical priority) → MUST invoke skill
+- `warn` (high priority) → Recommended, shows alert
+- `suggest` (medium/low) → Gentle hint
+
+**Behavior:** Analyzes prompt, matches keywords/intent patterns, outputs skill suggestions
+
 ## Hook Lifecycle
 
 ```
 User types prompt
     ↓
-UserPromptSubmit → multi-llm-advisor-hook.ts (suggests LLM help)
+UserPromptSubmit → skill-activation-prompt.ts (suggests skills based on keywords)
+                 → multi-llm-advisor-hook.ts (suggests LLM help)
     ↓
 Claude generates Bash command
     ↓

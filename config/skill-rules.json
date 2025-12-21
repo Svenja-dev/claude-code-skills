@@ -1,0 +1,131 @@
+{
+  "version": "1.0.0",
+  "description": "Skill activation rules - copy to ~/.claude/skills/skill-rules.json",
+  "skills": {
+    "code-quality-gate": {
+      "type": "guardrail",
+      "enforcement": "block",
+      "priority": "critical",
+      "promptTriggers": {
+        "keywords": ["deploy", "production", "vercel --prod", "release"],
+        "intentPatterns": [
+          "deploy.*prod",
+          "push.*production",
+          "release.*version"
+        ]
+      }
+    },
+    "strict-typescript-mode": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [".ts", ".tsx", "typescript", "interface", "type"],
+        "intentPatterns": [
+          "create.*component",
+          "add.*function",
+          "implement.*feature",
+          "refactor"
+        ]
+      }
+    },
+    "multi-llm-advisor": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": ["architecture", "second opinion", "review", "debug"],
+        "intentPatterns": [
+          "should.*use",
+          "which.*better",
+          "compare.*approach"
+        ]
+      }
+    },
+    "gemini-image-gen": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "low",
+      "promptTriggers": {
+        "keywords": ["generate image", "create visual", "dashboard image", "chart image"],
+        "intentPatterns": [
+          "create.*image",
+          "generate.*visual",
+          "make.*graphic"
+        ]
+      }
+    },
+    "social-media-content": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "low",
+      "promptTriggers": {
+        "keywords": ["linkedin", "twitter", "reddit", "discord", "social media"],
+        "intentPatterns": [
+          "write.*post",
+          "create.*content",
+          "share.*on"
+        ]
+      }
+    },
+    "preview-testing": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "preview",
+          "preview-test",
+          "vercel preview",
+          "pr test",
+          "visual test",
+          "e2e preview",
+          "screenshot"
+        ],
+        "intentPatterns": [
+          "teste.*preview",
+          "prüfe.*deployment",
+          "check.*vercel",
+          "test.*pr",
+          "visual.*regression"
+        ]
+      }
+    },
+    "security-validation": {
+      "type": "guardrail",
+      "enforcement": "block",
+      "priority": "critical",
+      "promptTriggers": {
+        "keywords": [
+          "security",
+          "auth",
+          "password",
+          "token",
+          "secret",
+          "api key"
+        ],
+        "intentPatterns": [
+          "implement.*auth",
+          "add.*login",
+          "handle.*credentials"
+        ]
+      }
+    },
+    "dsgvo-compliance": {
+      "type": "guardrail",
+      "enforcement": "warn",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "gdpr",
+          "dsgvo",
+          "privacy",
+          "user data",
+          "personal data",
+          "fra1"
+        ],
+        "intentPatterns": ["store.*user", "collect.*data", "deploy.*region"]
+      }
+    }
+  }
+}
