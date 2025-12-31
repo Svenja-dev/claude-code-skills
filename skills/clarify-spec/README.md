@@ -36,14 +36,14 @@ Claude: "Präzisierter Auftrag:
 
 ### Option 1: Manuell kopieren
 ```bash
+# In dein Skills-Verzeichnis kopieren
 cp -r clarify-spec ~/.claude/skills/
 ```
 
 ### Option 2: Git clone
 ```bash
 cd ~/.claude/skills
-git clone https://github.com/Svenja-dev/claude-code-skills.git
-# Dann clarify-spec Ordner nutzen
+git clone https://github.com/YOUR_USERNAME/clarify-spec.git
 ```
 
 ## Aktivierung
@@ -73,6 +73,7 @@ Der Skill aktiviert sich **automatisch** bei:
 ┌─────────────────────────────────────────────────┐
 │ 1. VAGHEITS-CHECK                               │
 │    Auftrag < 20 Wörter? Keine Dateinamen?       │
+│    Vage Verben?                                 │
 │              ↓                                  │
 │ 2. KONTEXT SAMMELN (still)                      │
 │    Relevante Dateien, CLAUDE.md prüfen          │
@@ -85,6 +86,8 @@ Der Skill aktiviert sich **automatisch** bei:
 │              ↓                                  │
 │ 5. BESTÄTIGUNG                                  │
 │    ja → Ausführen                               │
+│    nein → Abbrechen                             │
+│    anpassen → Modifizieren                      │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -96,17 +99,52 @@ Du kannst die Klärung überspringen:
 - `"Entscheide selbst"`
 - `"Keine Rückfragen"`
 
-## Philosophie
+## Beispiele
+
+### Vager Auftrag
+
+```
+User: "Optimiere die Performance"
+
+Claude: "Welche Performance meinst du?
+1. Ladezeit der Seite?
+2. API Response Time?
+3. Build-Zeit?
+4. Bundle Size?"
+```
+
+### Klarer Auftrag (keine Nachfrage)
+
+```
+User: "Füge in ResultsDisplay.tsx einen Download-Button hinzu
+       der die Analyse als .md Datei speichert"
+
+Claude: *führt direkt aus*
+```
+
+## Konfiguration
+
+Der Skill ist absichtlich **aggressiv** konfiguriert:
 
 > **LIEBER EINMAL ZU OFT NACHFRAGEN als falsch implementieren.**
 
-Der Skill ist absichtlich aggressiv konfiguriert. Wenn dir das zu viel ist, nutze "mach einfach".
+Wenn dir das zu viel ist, nutze "mach einfach" zum Überspringen.
+
+## Kompatibilität
+
+- Claude Code CLI
+- Claude Desktop (mit Skills-Support)
+- Alle Projekte (keine projekt-spezifischen Abhängigkeiten)
 
 ## Lizenz
 
-MIT License
+MIT License - siehe [LICENSE](LICENSE)
 
 ## Autor
 
 Dresden AI Insights
 [dresdenaiinsights.com](https://www.dresdenaiinsights.com)
+
+---
+
+*Entwickelt für fabrikIQ, nutzbar für jedes Projekt.*

@@ -1,164 +1,145 @@
 ---
 name: clarify-spec
 description: |
-  AKTIVIERT SICH AUTOMATISCH bei vagen Aufträgen. Erkennungsmerkmale: Auftrag <20 Wörter, keine konkreten Dateinamen, vage Verben (besser, optimieren, fixen, machen, ändern, verbessern, anpassen, erweitern). Stellt 2-4 gezielte Rückfragen und gibt strukturierten, bestätigbaren Auftrag aus. LIEBER EINMAL ZU OFT NACHFRAGEN als falsch implementieren. Escape: "mach einfach" überspringt Klärung.
+  AKTIVIERT SICH AUTOMATISCH bei vagen Auftraegen. LIEBER EINMAL ZU OFT NACHFRAGEN als falsch implementieren.
+
+  Erkennungsmerkmale (EINES genuegt!):
+  - Auftrag <25 Woerter
+  - Keine konkreten Dateinamen/Pfade
+  - Vage Verben: besser, optimieren, fixen, machen, aendern, verbessern, anpassen, erweitern, refactoren, aufraumen, ueberarbeiten
+  - Unsichere Sprache: irgendwie, vielleicht, mal eben, schnell, einfach, bisschen, koennte, sollte
+  - Fehlende Erfolgskriterien: Kein damit, sodass, weil, um zu
+  - Relative Begriffe ohne Kontext: schneller, besser, schoener, einfacher
+
+  Output ist STRUKTURIERTES JSON fuer prompt-architect Skill.
+  Escape: mach einfach, keine Rueckfragen, entscheide selbst ueberspringt Klaerung.
 triggers:
   - /clarify
   - /spec
   - /was-genau
-  - /präzisieren
+  - /praezisieren
+  - /klaeren
 ---
 
-# Clarify-Spec: Automatische Auftragsklärung
+# Clarify-Spec v2.0: Automatische Auftragsklarung
 
-## Wann aktivieren?
+## AKTIVIERUNG: Aggressiv - Lieber einmal zu oft!
 
-**AUTOMATISCH bei diesen Signalen:**
+### AUTOMATISCH bei diesen Signalen (EINES genuegt!)
 
-| Signal | Beispiel |
-|--------|----------|
-| Kurzer Auftrag (<20 Wörter) | "Mach den Export besser" |
-| Keine Dateinamen | "Optimiere die Performance" |
-| Vage Verben | besser, optimieren, fixen, machen, ändern, verbessern, anpassen |
-| Unsichere Sprache | irgendwie, vielleicht, mal eben, schnell, einfach |
-| Fehlende Erfolgskriterien | Kein "damit", "sodass", "weil" |
+| Signal | Beispiele | Warum problematisch |
+|--------|-----------|---------------------|
+| Kurzer Auftrag (<25 Woerter) | Mach den Export besser | Zu wenig Kontext |
+| Keine Dateinamen/Pfade | Optimiere die Performance | Scope unklar |
+| Vage Verben | besser, optimieren, fixen, machen, aendern, verbessern | Nicht operationalisierbar |
+| Unsichere Sprache | irgendwie, vielleicht, mal eben, schnell | Signalisiert Unklarheit |
+| Fehlende Erfolgskriterien | Kein damit, sodass, weil | Kein Ziel definiert |
+| Relative Begriffe | schneller, besser, schoener, einfacher | Ohne Baseline bedeutungslos |
+| Implizite Annahmen | Das uebliche, wie immer, standard | Kontext fehlt |
 
-**NICHT aktivieren bei:**
-- Konkreter Dateiname genannt
-- Klares Ziel mit Erfolgskriterium
-- Expliziter Befehl ("mach einfach", "keine Rückfragen")
+### NICHT aktivieren NUR wenn ALLE erfuellt:
+- Konkreter Dateiname/Pfad genannt UND
+- Klares, messbares Ziel definiert UND
+- Erfolgskriterium erkennbar UND
+- Expliziter Skip-Befehl (mach einfach, keine Rueckfragen)
 
 ## Workflow
 
-### Schritt 1: Vagheits-Check
+### Phase 1: Vagheits-Check (STRENG)
 
-Prüfe jeden Auftrag:
+Pruefe jeden Auftrag gegen diese Checkliste:
 
-```
-☐ Konkrete Datei/Komponente genannt?
-☐ Klares Ziel definiert?
-☐ Erfolgskriterium erkennbar?
-☐ Scope abgegrenzt?
-```
+[ ] Konkrete Datei/Komponente genannt?
+[ ] Klares, messbares Ziel definiert?
+[ ] Erfolgskriterium erkennbar?
+[ ] Scope abgegrenzt?
+[ ] Keine vagen Verben verwendet?
 
-**< 3 Haken → Rückfragen stellen!**
+Weniger als 4 Haken = RUECKFRAGEN STELLEN!
 
-### Schritt 2: Kontext sammeln (still)
+### Phase 2: Kontext sammeln (still, ohne User-Interaktion)
 
-- Relevante Dateien suchen
-- CLAUDE.md/AGENTS.md prüfen
-- No-Touch Zones identifizieren
+1. Relevante Dateien im Projekt suchen (Glob)
+2. CLAUDE.md / AGENTS.md pruefen
+3. No-Touch Zones identifizieren
+4. Aehnliche bestehende Implementierungen finden
 
-### Schritt 3: Gezielte Rückfragen (2-4)
+### Phase 3: Gezielte Rueckfragen (2-4, priorisiert)
 
-**Format:**
-```
-Bevor ich loslege - kurze Rückfrage:
+Format - kurz und praezise:
 
-1. [WAS genau soll anders sein?]
-2. [WO/Welche Datei ist betroffen?]
+Bevor ich loslege - kurze Klaerung:
+
+1. [KONKRETSTE FRAGE - WAS genau?]
+2. [ZWEITWICHTIGSTE FRAGE - WO/Welche Datei?]
 3. [Optional: Erfolgskriterium?]
+4. [Optional: Gibt es ein Beispiel/Referenz?]
 
-(Oder sag "mach einfach" - dann entscheide ich.)
-```
+(Oder sag mach einfach - dann entscheide ich nach bestem Wissen.)
 
-**Fragen-Priorität:**
+Fragen-Prioritaet:
 
-| Prio | Typ | Frage |
-|------|-----|-------|
-| 1 | WAS | "Was genau meinst du mit 'besser'?" |
-| 2 | WO | "Welche Komponente ist betroffen?" |
-| 3 | ERFOLG | "Woran erkenne ich dass es fertig ist?" |
-| 4 | BEISPIEL | "Gibt es ein Beispiel/Referenz?" |
+| Prio | Typ | Beispiel-Fragen |
+|------|-----|-----------------|
+| 1 | WAS | Was genau meinst du mit besser? Welches Problem soll geloest werden? |
+| 2 | WO | Welche Datei/Komponente ist betroffen? Frontend oder Backend? |
+| 3 | ERFOLG | Woran erkenne ich, dass es fertig ist? Was ist das erwartete Ergebnis? |
+| 4 | BEISPIEL | Gibt es eine Referenz/Screenshot? Wie sieht der gewuenschte Output aus? |
+| 5 | KONTEXT | Fuer welchen Use Case? Wer ist der Nutzer dieser Funktion? |
 
-### Schritt 4: Strukturierter Auftrag
+### Phase 4: Strukturierter Output (JSON fuer prompt-architect)
 
-Nach Antwort ausgeben:
+Nach Antwort des Users, generiere strukturiertes JSON mit:
+- clarified_task.goal: Praezises Ziel in 1-2 Saetzen
+- clarified_task.problem_statement: Was ist das Problem
+- clarified_task.scope.files: Betroffene Dateien
+- clarified_task.scope.no_touch: Nicht anfassen
+- clarified_task.success_criteria: Messbare Kriterien
+- clarified_task.constraints: Einschraenkungen
+- metadata.original_request: Urspruenglicher Auftrag
+- metadata.confidence: high/medium/low
 
-```markdown
-## Präzisierter Auftrag
+### Phase 5: Bestaetigung mit Prompt-Vorschau
 
-**Ziel:** [1 Satz]
+Zeige dem User eine lesbare Zusammenfassung mit Ziel, Problem, Scope, Erfolgskriterien, Constraints.
 
-**Scope:**
-- Dateien: [Liste]
-- Neue Dateien: [Falls nötig]
+Frage: Soll ich loslegen? (ja / nein / anpassen: ...)
+Oder: /prompt-architect fuer einen strukturierten Best-Practice Prompt
 
-**Erfolgskriterien:**
-- [ ] Kriterium 1
-- [ ] Kriterium 2
-
----
-Soll ich loslegen? (ja/nein/anpassen)
-```
-
-### Schritt 5: Bestätigung
+### Phase 6: Reaktion auf Bestaetigung
 
 | Antwort | Aktion |
 |---------|--------|
-| ja / ok / los | Ausführen |
-| nein | Abbrechen |
-| anpassen: ... | Modifizieren |
-| mach einfach | Mit eigenem Ermessen |
-
-## Beispiele
-
-### Vager Auftrag → Nachfragen
-
-**User:** "Mach den Export besser"
-
-**Claude:**
-```
-Bevor ich loslege - kurze Rückfrage:
-
-1. Welchen Export meinst du? (PPTX / Markdown / beide)
-2. Was genau stört dich am aktuellen Export?
-
-(Oder sag "mach einfach")
-```
-
-### Klarer Auftrag → Direkt ausführen
-
-**User:** "Füge in ResultsDisplay.tsx einen Download-Button hinzu der die Analyse als .md speichert"
-
-→ Alle Kriterien erfüllt → Keine Rückfragen nötig.
-
-### Grenzfall → Kurze Nachfrage
-
-**User:** "Füge einen Button hinzu"
-
-**Claude:**
-```
-Kurze Rückfrage:
-1. Welcher Button? (Download, Export, Login...)
-2. Wo soll er erscheinen?
-```
+| ja / ok / los / mach | Ausfuehren mit internem JSON-Kontext |
+| nein / stop / abbrechen | Abbrechen, nachfragen was stattdessen |
+| anpassen: ... | JSON modifizieren, erneut zeigen |
+| /prompt-architect | An prompt-architect Skill uebergeben |
+| mach einfach | Mit eigenem Ermessen ausfuehren |
 
 ## Escape Hatches
 
-User kann Klärung überspringen mit:
-- "Mach einfach"
-- "Entscheide selbst"
-- "Keine Rückfragen"
-- "Egal, hauptsache X"
+User kann Klaerung jederzeit ueberspringen mit:
+- Mach einfach
+- Entscheide selbst
+- Keine Rueckfragen
+- Egal, hauptsache X funktioniert
+- Just do it
 
-→ Mit bestem Wissen ausführen.
+Bei Escape: Mit bestem Wissen ausfuehren, aber Annahmen dokumentieren.
 
-## Anti-Pattern
+## Integration mit prompt-architect
 
-**FALSCH:**
-```
-User: "Optimiere die Performance"
-Claude: *beginnt sofort mit Refactoring*
-→ Falsche Annahmen, Nacharbeit
-```
+Nach erfolgreicher Klaerung kann der User /prompt-architect aufrufen.
+Der prompt-architect Skill nutzt das JSON aus Phase 4, um einen vollstaendigen
+Best-Practice Prompt nach Claude 4.x Standards zu generieren.
 
-**RICHTIG:**
-```
-User: "Optimiere die Performance"
-Claude: "Welche Performance?
-1. Ladezeit?
-2. API Response?
-3. Build-Zeit?
-4. Bundle Size?"
-```
+Workflow:
+clarify-spec -> JSON Output -> prompt-architect -> Ausfuehrung
+
+## Metrik: Erfolg
+
+Der Skill ist erfolgreich wenn:
+- Weniger Nacharbeit nach Implementierung
+- User sagt Ja, genau das meinte ich
+- Erste Implementierung erfuellt alle Kriterien
+- Keine Das meinte ich nicht Situationen
