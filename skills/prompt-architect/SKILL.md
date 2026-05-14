@@ -145,7 +145,8 @@ Before responding, verify:
 ### Schritt 1: Input analysieren
 
 Akzeptiert:
-1. JSON von clarify-spec (bevorzugt)
+1. JSON oder Kontext aus einem vorherigen clarify-spec-Lauf, wenn der User danach
+   explizit /prompt-architect aufruft
 2. Freie Textbeschreibung
 3. Kombiniert mit aktuellem Projekt-Kontext
 
@@ -259,8 +260,8 @@ Der generierte Prompt ist optimiert fuer:
 
 ## Integration
 
-### Mit clarify-spec
-clarify-spec -> JSON -> prompt-architect -> Ausfuehrung
+### Nach clarify-spec
+clarify-spec -> User ruft /prompt-architect explizit auf -> Prompt -> Ausfuehrung
 
 ### Mit /supervisor
 prompt-architect -> Prompt -> /supervisor -> Quality Gates -> Ergebnis

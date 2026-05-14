@@ -27,9 +27,9 @@ triggers:
 
 ## Grundhaltung
 
-Dieser Skill ist **kein Reflex**. Sein Vorgaenger (v2.0 "aggressiv, lieber einmal
-zu oft") hat eine Frage-Schleife erzeugt, in der Lara nur noch getippt hat statt
-Arbeit voranzubringen. Das ist der Fehler, den v3.0 verhindert.
+Dieser Skill ist **kein Reflex**. Sein Vorgaenger (v2.0 mit aggressiver
+Rueckfrage-Schwelle) hat eine Frage-Schleife erzeugt, in der Lara nur noch
+getippt hat statt Arbeit voranzubringen. Das ist der Fehler, den v3.0 verhindert.
 
 Die Regel ist: **Erst selbst nachsehen. Dann eine Senior-Entscheidung treffen.
 Nur wenn eine echte Ziel-Mehrdeutigkeit bleibt — einmal gebuendelt fragen.**

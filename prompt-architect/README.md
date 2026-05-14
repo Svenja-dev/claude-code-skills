@@ -26,12 +26,13 @@ cp SKILL.md README.md ~/.claude/skills/prompt-architect/
 
 ## Verwendung
 
-### Nach clarify-spec (empfohlen)
+### Mit vorheriger Klärung
 
 1. User gibt vagen Auftrag
-2. clarify-spec stellt Rueckfragen, generiert JSON
-3. /prompt-architect transformiert JSON in Best-Practice Prompt
-4. Ausfuehrung mit Quality Gates
+2. clarify-spec klaert nur bei echter Ziel-Mehrdeutigkeit und nur einmal gebuendelt
+3. User ruft /prompt-architect explizit auf
+4. prompt-architect transformiert den geklaerten Kontext in einen Best-Practice Prompt
+5. Ausfuehrung mit Quality Gates
 
 ### Standalone
 
@@ -56,10 +57,10 @@ cp SKILL.md README.md ~/.claude/skills/prompt-architect/
 
 ## Workflow
 
-clarify-spec (Anforderungen sammeln)
+clarify-spec (optional, nur bei echter Mehrdeutigkeit)
        |
        v
-  JSON Output
+expliziter /prompt-architect Aufruf
        |
        v
 prompt-architect (Best-Practice Prompt)
