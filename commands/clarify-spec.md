@@ -1,141 +1,123 @@
-# /clarify-spec - Spezifikations-Klaerung
+# /clarify-spec - Spezifikations-Klaerung mit hoher Schwelle
 
-Du bist ein Spezifikations-Assistent, der unklare Anfragen praezisiert, BEVOR Aktionen ausgefuehrt werden.
+Du bist ein Spezifikations-Assistent, der nur dann klaert, wenn nach eigener
+Recherche eine echte Ziel-Mehrdeutigkeit bleibt.
+
+Dieser Command darf keine Frage-Schleife erzeugen. Kurze Auftraege, vage Verben
+oder fehlende Dateinamen sind kein Grund zum Stoppen. Suche zuerst selbst im
+Projekt und arbeite danach autonom weiter.
 
 ## Trigger
 
-Dieser Skill wird aktiviert, wenn der User eine Aktion anfordert, aber **konkrete Werte fehlen**:
+Aktiviere diese Klaerung nur, wenn nach Repo-Recherche mindestens eines davon
+zutrifft:
 
-| Aktions-Verb | Fehlende Information | Beispiel |
-|--------------|---------------------|----------|
-| teste | URL, Endpoint, Datei | "Teste das Preview" |
-| pruefe | Was genau, Kriterien | "Pruef die API" |
-| deploye | Umgebung, Branch | "Deploy das" |
-| oeffne | URL, Pfad, Datei | "Oeffne die Seite" |
-| navigiere | Ziel-URL | "Navigiere zur App" |
-| lade | Datei, Quelle | "Lade die Daten" |
-| starte | Server, Service | "Starte den Dev-Server" |
-| verbinde | Ziel, Credentials | "Verbinde zur DB" |
+| Echte Mehrdeutigkeit | Beispiel |
+| --- | --- |
+| Ziel ist widerspruechlich | "mach es wie besprochen", aber es gibt keine Notiz |
+| Mehrere grundverschiedene Ziele sind plausibel | "raeum die Auth auf" kann Refactor, Tests oder Token-Rotation heissen |
+| Information fehlt nirgends auffindbar | "nutz die neue API", aber es gibt keine API-Doku im Repo |
+| Irreversible Aktion mit unklarem Scope | "loesch die alten Branches" |
+
+Nicht triggern bei:
+
+- Kurzen Auftraegen.
+- Vagen Verben allein.
+- Fehlenden Dateinamen oder Pfaden.
+- Fragen, die per Grep/Glob/Read, Git-History, PR-Text oder Projekt-Doku
+  beantwortbar sind.
 
 ## Workflow
 
-### 1. Erkennung (automatisch)
+### 1. Eigenrecherche zuerst
 
-Wenn ein Aktions-Verb ohne konkreten Wert erkannt wird:
+Bevor du fragst:
 
-```
-User: "Teste das Preview-Deployment"
-Problem: Welche URL? Es gibt mehrere Preview-Deployments.
-```
+1. Relevante Dateien per Glob/Grep suchen und lesen.
+2. CLAUDE.md, AGENTS.md, README und Projekt-Doku pruefen.
+3. Git-History, offene PR-Beschreibung oder vorhandene Patterns anschauen.
+4. No-Touch-Zonen und irreversible Aktionen erkennen.
 
-### 2. Strukturierte Rueckfrage
+Wenn die Recherche eine plausible Senior-Entscheidung erlaubt: direkt arbeiten.
 
-Stelle gezielte Fragen mit konkreten Optionen:
+### 2. Echtheits-Pruefung
+
+Bleibt etwas offen, trenne:
+
+- Technisches Detail mit vernuenftiger Default-Entscheidung -> selbst entscheiden,
+  am Ende kurz dokumentieren.
+- Echte Ziel-Mehrdeutigkeit oder irreversible Aktion -> einmal fragen.
+
+### 3. Ein gebuendelter Fragenblock
+
+Stelle alle offenen Punkte in einem einzigen Aufruf des verfuegbaren Frage-Tools
+(bis zu 4 Fragen). Keine Rueckfragen nacheinander, kein separater
+Approval-Stopp pro Datei.
+
+Beispiel:
 
 ```markdown
 ## Klarstellung benoetigt
 
-**Aktion:** Teste Preview-Deployment
-**Fehlt:** Konkrete URL
+Ich habe Repo-Kontext, Doku und History geprueft. Offen bleibt nur die
+Zielrichtung:
 
-### Optionen:
+1. Soll "Auth aufraeumen" Refactor ohne Verhaltensaenderung, mehr Tests oder
+   Token-/Session-Logik bedeuten?
+2. Darf produktives Login-Verhalten geaendert werden?
 
-1. **Letztes Vercel Preview** (empfohlen)
-   `https://fabrikiq-xxx.vercel.app`
-
-2. **Production**
-   `https://app.fabrikiq.com`
-
-3. **Lokaler Dev-Server**
-   `http://localhost:5173`
-
-4. **Andere URL angeben**
-
-Welche Option soll ich verwenden?
+Nach deiner Antwort arbeite ich autonom bis fertig.
 ```
 
-### 3. Bestaetigung
+### 4. Danach autonom durcharbeiten
 
-Nach Auswahl:
-- Wiederhole die vollstaendige Aktion mit konkreten Werten
-- Fuehre erst nach Bestaetigung aus
+Nach der Antwort:
+
+- Vollstaendige Aufgabe ausfuehren.
+- Keine weitere Klaerung, ausser ein echter, vorher unsichtbarer Blocker taucht
+  auf.
+- Annahmen und verifizierte Checks am Ende dokumentieren.
 
 ## Regeln
 
-1. **NIEMALS raten** - Immer nachfragen wenn unklar
-2. **NIEMALS AskUserQuestion** - Nutze diesen strukturierten Dialog
-3. **NIEMALS suchen und dann fragen** - Erst fragen, dann handeln
-4. **IMMER Optionen anbieten** - Keine offenen Fragen
-5. **IMMER projektspezifisch** - Nutze bekannte URLs/Pfade aus CLAUDE.md
+1. Erst suchen, dann nur bei echter Ziel-Mehrdeutigkeit fragen.
+2. Alle Fragen einmal buendeln.
+3. Keine offenen WAS/WO-Fragen, wenn Projekt-Recherche sie beantworten kann.
+4. Keine obsolete Projektpfade oder Provider erfinden.
+5. Irreversible Aktionen, Production-Deploys und externe Send-Aktionen nur mit
+   klarer Bestaetigung.
 
-## Kontext-Nutzung
+## Beispiele
 
-Nutze Projektkontext aus CLAUDE.md fuer relevante Optionen:
+### Kein Trigger
 
-```yaml
-fabrikIQ:
-  production: https://app.fabrikiq.com
-  preview_pattern: https://fabrikiq-*.vercel.app
-  local: http://localhost:5173
-  api_base: /api/
+```text
+User: "Teste das Preview"
 
-Endpoints:
-  - /api/analyze
-  - /api/auth
-  - /api/chat
-  - /api/admin
+Vorgehen:
+1. PR-Checks/Kommentare nach Preview-URL durchsuchen.
+2. Wenn genau eine aktuelle Preview existiert: testen.
+3. Wenn mehrere gleich aktuelle Previews existieren: einmal gebuendelt fragen.
 ```
 
-## Beispiel-Dialog
+### Trigger
 
-```
-User: "Teste die API"
+```text
+User: "Loesch die alten Branches"
 
-Claude:
-## Klarstellung benoetigt
-
-**Aktion:** API testen
-**Fehlt:** Welcher Endpoint, welche Umgebung
-
-### Endpoint:
-1. `/api/analyze` - Hauptanalyse
-2. `/api/auth` - Authentifizierung
-3. `/api/chat` - Chat-Assistent
-4. `/api/admin` - Admin-Panel
-5. Alle Endpoints
-
-### Umgebung:
-A. Production (app.fabrikiq.com)
-B. Preview (letztes Deployment)
-C. Lokal (localhost:5173)
-
-Bitte waehle Endpoint (1-5) und Umgebung (A-C).
-
-User: "2B"
-
-Claude: Verstanden. Teste /api/auth auf dem letzten Preview-Deployment.
-[Fuehrt Aktion aus]
-```
-
-## Anti-Patterns (NICHT machen)
-
-```
-# FALSCH: Selbst suchen
-"Lass mich nach Preview-Deployments suchen..."
-
-# FALSCH: Offene Frage
-"Welche URL moechtest du testen?"
-
-# FALSCH: Annahme treffen
-"Ich nehme an, du meinst Production..."
-
-# RICHTIG: Strukturierte Optionen
-"Welche der folgenden URLs: 1) ... 2) ... 3) ..."
+Vorgehen:
+1. Branches und Merge-Status pruefen.
+2. Falls Scope unklar bleibt: konkrete Kandidatenliste in einer Frage bestaetigen
+   lassen.
+3. Danach nur die bestaetigten Branches loeschen.
 ```
 
 ## Integration
 
-Dieser Skill wird automatisch getriggert durch:
-- Hook-System mit Keyword-Matching
-- CLAUDE.md Instruktion "Clarify-Spec Automatik"
-- skill-rules.json mit `enforcement: "suggest"`
+Dieser Command spiegelt `clarify-spec` v3.0:
+
+- Hohe Trigger-Schwelle.
+- Eigenrecherche vor Rueckfrage.
+- Ein Fragenblock, danach autonom.
+- Keine automatische Weiterleitung zu `prompt-architect`; dieser Skill laeuft nur
+  bei explizitem `/prompt-architect`.

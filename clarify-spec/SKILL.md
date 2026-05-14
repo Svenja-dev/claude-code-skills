@@ -1,18 +1,20 @@
 ---
 name: clarify-spec
 description: |
-  AKTIVIERT SICH AUTOMATISCH bei vagen Auftraegen. LIEBER EINMAL ZU OFT NACHFRAGEN als falsch implementieren.
+  Klaert einen Auftrag NUR wenn er echt mehrdeutig ist und eigenes Recherchieren
+  (Grep/Glob/Read der Projektdateien) die Unklarheit nicht aufloest.
 
-  Erkennungsmerkmale (EINES genuegt!):
-  - Auftrag <25 Woerter
-  - Keine konkreten Dateinamen/Pfade
-  - Vage Verben: besser, optimieren, fixen, machen, aendern, verbessern, anpassen, erweitern, refactoren, aufraumen, ueberarbeiten
-  - Unsichere Sprache: irgendwie, vielleicht, mal eben, schnell, einfach, bisschen, koennte, sollte
-  - Fehlende Erfolgskriterien: Kein damit, sodass, weil, um zu
-  - Relative Begriffe ohne Kontext: schneller, besser, schoener, einfacher
+  NICHT triggern bei: kurzen Auftraegen, vagen Verben allein ("fix X", "mach Y besser"),
+  fehlenden Dateinamen. Das sind normale Alltagsauftraege — die werden durch
+  Eigenrecherche + Senior-Entscheidung erledigt, nicht durch Rueckfragen.
 
-  Output ist STRUKTURIERTES JSON fuer prompt-architect Skill.
-  Escape: mach einfach, keine Rueckfragen, entscheide selbst ueberspringt Klaerung.
+  Triggern NUR bei echter Mehrdeutigkeit: das Ziel selbst ist unklar oder
+  widerspruechlich, mehrere grundlegend verschiedene Interpretationen sind moeglich,
+  oder es fehlt Information die nirgends im Repo steht.
+
+  Wenn er triggert: ALLE Fragen EINMAL gebuendelt (ein AskUserQuestion-Aufruf,
+  bis 4 Fragen) — danach autonom durcharbeiten, kein Stopp pro Schritt.
+  Escape: "mach einfach" / "keine Rueckfragen" / "entscheide selbst" ueberspringt komplett.
 triggers:
   - /clarify
   - /spec
@@ -21,125 +23,107 @@ triggers:
   - /klaeren
 ---
 
-# Clarify-Spec v2.0: Automatische Auftragsklarung
+# Clarify-Spec v3.0: Auftragsklaerung mit hoher Schwelle
 
-## AKTIVIERUNG: Aggressiv - Lieber einmal zu oft!
+## Grundhaltung
 
-### AUTOMATISCH bei diesen Signalen (EINES genuegt!)
+Dieser Skill ist **kein Reflex**. Sein Vorgaenger (v2.0 mit aggressiver
+Rueckfrage-Schwelle) hat eine Frage-Schleife erzeugt, in der Lara nur noch
+getippt hat statt Arbeit voranzubringen. Das ist der Fehler, den v3.0 verhindert.
 
-| Signal | Beispiele | Warum problematisch |
-|--------|-----------|---------------------|
-| Kurzer Auftrag (<25 Woerter) | Mach den Export besser | Zu wenig Kontext |
-| Keine Dateinamen/Pfade | Optimiere die Performance | Scope unklar |
-| Vage Verben | besser, optimieren, fixen, machen, aendern, verbessern | Nicht operationalisierbar |
-| Unsichere Sprache | irgendwie, vielleicht, mal eben, schnell | Signalisiert Unklarheit |
-| Fehlende Erfolgskriterien | Kein damit, sodass, weil | Kein Ziel definiert |
-| Relative Begriffe | schneller, besser, schoener, einfacher | Ohne Baseline bedeutungslos |
-| Implizite Annahmen | Das uebliche, wie immer, standard | Kontext fehlt |
+Die Regel ist: **Erst selbst nachsehen. Dann eine Senior-Entscheidung treffen.
+Nur wenn eine echte Ziel-Mehrdeutigkeit bleibt — einmal gebuendelt fragen.**
 
-### NICHT aktivieren NUR wenn ALLE erfuellt:
-- Konkreter Dateiname/Pfad genannt UND
-- Klares, messbares Ziel definiert UND
-- Erfolgskriterium erkennbar UND
-- Expliziter Skip-Befehl (mach einfach, keine Rueckfragen)
+Ein kurzer Auftrag ist kein Problem. Ein vages Verb ist kein Problem. Ein fehlender
+Dateiname ist kein Problem — den findet man mit Grep. Ein *echt mehrdeutiges Ziel*
+ist ein Problem.
+
+## Wann dieser Skill triggert (hohe Schwelle)
+
+NUR wenn nach eigener Recherche mindestens eines davon zutrifft:
+
+| Echte Mehrdeutigkeit | Beispiel |
+|---|---|
+| Das Ziel selbst ist unklar/widerspruechlich | "mach es wie besprochen" — es gibt keine Notiz, was besprochen wurde |
+| Mehrere grundlegend verschiedene Interpretationen | "raeum die Auth auf" — koennte Refactor, Logging, Token-Rotation oder Tests heissen, alle plausibel |
+| Information fehlt, die NIRGENDS im Repo steht | "nutz die neue API" — keine API im Code, kein Doc, kein Issue |
+| Irreversible Aktion mit unklarem Scope | "loesch die alten Branches" — welche genau? unwiederbringlich |
+
+## Wann dieser Skill NICHT triggert
+
+Bei all dem: NICHT fragen — recherchieren und arbeiten.
+
+- Kurzer Auftrag ("fix den Export-Bug") → Bug suchen, fixen.
+- Vages Verb ("mach die Seite besser") → wenn der Kontext den Mangel klarmacht
+  (offensichtlicher Bug, kaputtes Layout): beheben. Wenn wirklich offen: EINE
+  gebuendelte Frage, was "besser" konkret heisst — aber erst nach Ansehen der Seite.
+- Kein Dateiname genannt → Glob/Grep findet die Datei.
+- "wie immer" / "das uebliche" → Git-History und bestehende Patterns zeigen das Uebliche.
 
 ## Workflow
 
-### Phase 1: Vagheits-Check (STRENG)
+### Phase 1: Eigenrecherche zuerst (immer, still, ohne User)
 
-Pruefe jeden Auftrag gegen diese Checkliste:
+Bevor irgendeine Frage gestellt wird:
 
-[ ] Konkrete Datei/Komponente genannt?
-[ ] Klares, messbares Ziel definiert?
-[ ] Erfolgskriterium erkennbar?
-[ ] Scope abgegrenzt?
-[ ] Keine vagen Verben verwendet?
+1. Relevante Dateien suchen (Glob/Grep) und lesen.
+2. CLAUDE.md / AGENTS.md / Memory pruefen.
+3. Git-History und aehnliche bestehende Implementierungen ansehen.
+4. No-Touch-Zones identifizieren.
 
-Weniger als 4 Haken = RUECKFRAGEN STELLEN!
+Nach Phase 1 ist die Frage in den allermeisten Faellen beantwortet. Dann: **direkt
+arbeiten, Phase 2-4 ueberspringen.**
 
-### Phase 2: Kontext sammeln (still, ohne User-Interaktion)
+### Phase 2: Echtheits-Pruefung der Unklarheit
 
-1. Relevante Dateien im Projekt suchen (Glob)
-2. CLAUDE.md / AGENTS.md pruefen
-3. No-Touch Zones identifizieren
-4. Aehnliche bestehende Implementierungen finden
+Bleibt nach Phase 1 etwas offen — pruefen: Ist das eine **echte
+Ziel-Mehrdeutigkeit** (Tabelle oben) oder nur ein Detail, das eine
+Senior-Entscheidung verträgt?
 
-### Phase 3: Gezielte Rueckfragen (2-4, priorisiert)
+- Detail, das man vernuenftig selbst entscheiden kann → entscheiden, Annahme im
+  Ergebnis dokumentieren, weiterarbeiten.
+- Echte Ziel-Mehrdeutigkeit → Phase 3.
 
-Format - kurz und praezise:
+### Phase 3: EIN gebuendelter Fragen-Block
 
-Bevor ich loslege - kurze Klaerung:
+Wenn gefragt werden muss: **alle offenen Punkte auf einmal** ueber das
+`AskUserQuestion`-Tool (bis zu 4 Fragen gleichzeitig). Nicht nacheinander, nicht
+ueber mehrere Nachrichten verteilt.
 
-1. [KONKRETSTE FRAGE - WAS genau?]
-2. [ZWEITWICHTIGSTE FRAGE - WO/Welche Datei?]
-3. [Optional: Erfolgskriterium?]
-4. [Optional: Gibt es ein Beispiel/Referenz?]
+Fragen-Prioritaet — nur was wirklich offen ist:
 
-(Oder sag mach einfach - dann entscheide ich nach bestem Wissen.)
+| Prio | Typ | Wann fragen |
+|------|-----|-------------|
+| 1 | ZIEL | Das Ziel selbst ist mehrdeutig — welche Interpretation? |
+| 2 | SCOPE | Bei irreversiblen Aktionen: was genau ist betroffen? |
+| 3 | INFO | Information fehlt, die nirgends im Repo steht |
 
-Fragen-Prioritaet:
+WAS/WO-Fragen ("welche Datei?", "Frontend oder Backend?") gehoeren NICHT hierher —
+die beantwortet Phase 1.
 
-| Prio | Typ | Beispiel-Fragen |
-|------|-----|-----------------|
-| 1 | WAS | Was genau meinst du mit besser? Welches Problem soll geloest werden? |
-| 2 | WO | Welche Datei/Komponente ist betroffen? Frontend oder Backend? |
-| 3 | ERFOLG | Woran erkenne ich, dass es fertig ist? Was ist das erwartete Ergebnis? |
-| 4 | BEISPIEL | Gibt es eine Referenz/Screenshot? Wie sieht der gewuenschte Output aus? |
-| 5 | KONTEXT | Fuer welchen Use Case? Wer ist der Nutzer dieser Funktion? |
+### Phase 4: Nach den Antworten — autonom
 
-### Phase 4: Strukturierter Output (JSON fuer prompt-architect)
-
-Nach Antwort des Users, generiere strukturiertes JSON mit:
-- clarified_task.goal: Praezises Ziel in 1-2 Saetzen
-- clarified_task.problem_statement: Was ist das Problem
-- clarified_task.scope.files: Betroffene Dateien
-- clarified_task.scope.no_touch: Nicht anfassen
-- clarified_task.success_criteria: Messbare Kriterien
-- clarified_task.constraints: Einschraenkungen
-- metadata.original_request: Urspruenglicher Auftrag
-- metadata.confidence: high/medium/low
-
-### Phase 5: Bestaetigung mit Prompt-Vorschau
-
-Zeige dem User eine lesbare Zusammenfassung mit Ziel, Problem, Scope, Erfolgskriterien, Constraints.
-
-Frage: Soll ich loslegen? (ja / nein / anpassen: ...)
-Oder: /prompt-architect fuer einen strukturierten Best-Practice Prompt
-
-### Phase 6: Reaktion auf Bestaetigung
-
-| Antwort | Aktion |
-|---------|--------|
-| ja / ok / los / mach | Ausfuehren mit internem JSON-Kontext |
-| nein / stop / abbrechen | Abbrechen, nachfragen was stattdessen |
-| anpassen: ... | JSON modifizieren, erneut zeigen |
-| /prompt-architect | An prompt-architect Skill uebergeben |
-| mach einfach | Mit eigenem Ermessen ausfuehren |
+Sobald die Antworten da sind: **durcharbeiten bis fertig.** Keine weitere
+Rueckfrage, kein Approval-Checkpoint pro Schritt, kein erneutes Klaeren. Nur ein
+echter, vorher unsichtbarer Blocker rechtfertigt eine weitere Frage.
 
 ## Escape Hatches
 
-User kann Klaerung jederzeit ueberspringen mit:
-- Mach einfach
-- Entscheide selbst
-- Keine Rueckfragen
-- Egal, hauptsache X funktioniert
-- Just do it
+Klaerung wird komplett uebersprungen bei:
+- "Mach einfach" / "Entscheide selbst" / "Keine Rueckfragen"
+- "Egal, hauptsache X funktioniert" / "Just do it"
 
-Bei Escape: Mit bestem Wissen ausfuehren, aber Annahmen dokumentieren.
+Bei Escape: mit bestem Wissen ausfuehren, getroffene Annahmen am Ende kurz nennen.
 
-## Integration mit prompt-architect
+## Verhaeltnis zu prompt-architect
 
-Nach erfolgreicher Klaerung kann der User /prompt-architect aufrufen.
-Der prompt-architect Skill nutzt das JSON aus Phase 4, um einen vollstaendigen
-Best-Practice Prompt nach Claude 4.x Standards zu generieren.
+`prompt-architect` triggert NICHT mehr automatisch nach diesem Skill. Wenn ein
+strukturierter Prompt gebraucht wird, ruft der User `/prompt-architect` explizit auf.
 
-Workflow:
-clarify-spec -> JSON Output -> prompt-architect -> Ausfuehrung
-
-## Metrik: Erfolg
+## Erfolgs-Metrik
 
 Der Skill ist erfolgreich wenn:
-- Weniger Nacharbeit nach Implementierung
-- User sagt Ja, genau das meinte ich
-- Erste Implementierung erfuellt alle Kriterien
-- Keine Das meinte ich nicht Situationen
+- Lara NICHT in einer Frage-Schleife sitzt.
+- Normale Alltagsauftraege ohne Rueckfrage erledigt werden.
+- Gefragt wird nur bei echter Mehrdeutigkeit — und dann genau einmal.
+- Keine "das meinte ich nicht"-Situationen, weil Phase 1 den Kontext liefert.

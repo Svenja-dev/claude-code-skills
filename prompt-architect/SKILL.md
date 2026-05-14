@@ -8,8 +8,8 @@ description: |
   - Anthropic Claude 4.x Best Practices: Explizitheit, Contract-Style, Examples beat Adjectives
   - Pipelines over Prompts Philosophie
   
-  AKTIVIERT SICH AUTOMATISCH nach clarify-spec oder bei /prompt-architect.
-  Produziert strukturierten, ausfuehrbaren Prompt mit allen Best Practices.
+  Wird AUSSCHLIESSLICH per /prompt-architect aufgerufen — KEINE automatische
+  Aktivierung. Produziert strukturierten, ausfuehrbaren Prompt mit allen Best Practices.
 triggers:
   - /prompt-architect
   - /prompt
@@ -28,12 +28,16 @@ triggers:
 
 ## AKTIVIERUNG
 
-### Automatisch nach clarify-spec
-Wenn clarify-spec ein JSON Output generiert hat, kann prompt-architect
-dieses JSON in einen strukturierten Prompt transformieren.
+**Nur manuell.** Dieser Skill aktiviert sich NICHT automatisch — auch nicht nach
+clarify-spec. Die fruehere Auto-Kette (clarify-spec -> prompt-architect) wurde
+entfernt, weil sie eine Klaerungs-Schleife verstaerkt hat.
 
 ### Manuell mit Trigger
 /prompt-architect [Aufgabenbeschreibung]
+
+Falls ein clarify-spec-Lauf vorausging und ein JSON-Ergebnis vorliegt, kann
+prompt-architect dieses JSON nutzen — aber nur, wenn der User /prompt-architect
+explizit aufruft.
 
 ## Die 4 Beginner Moves (Nate B. Jones)
 
@@ -141,7 +145,8 @@ Before responding, verify:
 ### Schritt 1: Input analysieren
 
 Akzeptiert:
-1. JSON von clarify-spec (bevorzugt)
+1. JSON oder Kontext aus einem vorherigen clarify-spec-Lauf, wenn der User danach
+   explizit /prompt-architect aufruft
 2. Freie Textbeschreibung
 3. Kombiniert mit aktuellem Projekt-Kontext
 
@@ -255,8 +260,8 @@ Der generierte Prompt ist optimiert fuer:
 
 ## Integration
 
-### Mit clarify-spec
-clarify-spec -> JSON -> prompt-architect -> Ausfuehrung
+### Nach clarify-spec
+clarify-spec -> User ruft /prompt-architect explizit auf -> Prompt -> Ausfuehrung
 
 ### Mit /supervisor
 prompt-architect -> Prompt -> /supervisor -> Quality Gates -> Ergebnis
